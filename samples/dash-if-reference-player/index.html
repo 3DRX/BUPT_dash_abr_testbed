@@ -266,6 +266,30 @@
                     <div class="sub-options-item-title">Standard</div>
                     <div class="sub-options-item-body">
                         <label data-toggle="tooltip" data-placement="right"
+                               title="BUPT Tap algo.">
+                            <input type="radio" id="abrTap" autocomplete="off" name="abrStrategy"
+                                   ng-click="changeABRStrategy('abrTap')">
+                            ABR Strategy: TAP
+                        </label>        
+                        <label data-toggle="tooltip" data-placement="right"
+                               title="BUPT Tap algo.">
+                            <input type="radio" id="abrTap" autocomplete="off" name="abrStrategy"
+                                   ng-click="changeABRStrategy('abrMpc')">
+                            ABR Strategy: MPC
+                        </label>
+                        <label data-toggle="tooltip" data-placement="right"
+                               title="BUPT Tap algo.">
+                            <input type="radio" id="abrTap" autocomplete="off" name="abrStrategy"
+                                   ng-click="changeABRStrategy('abrRobustMpc')">
+                            ABR Strategy: RobustMPC
+                        </label>
+                        <label data-toggle="tooltip" data-placement="right"
+                               title="BUPT Tap algo.">
+                            <input type="radio" id="abrTap" autocomplete="off" name="abrStrategy"
+                                   ng-click="changeABRStrategy('abrBba')">
+                            ABR Strategy: BBA
+                        </label>
+                        <label data-toggle="tooltip" data-placement="right"
                                title="Dynamically switch between BOLA and Throughput strategies.">
                             <input type="radio" id="abrDynamic" autocomplete="off" name="abrStrategy" checked="checked"
                                    ng-model="ABRStrategy"
