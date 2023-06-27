@@ -144,6 +144,13 @@ class Constants {
         this.ABR_STRATEGY_LoLP = 'abrLoLP';
 
         /**
+         *  @constant {string} ABR_STRATEGY_TAP Adaptive bitrate algorithm using external ABR server
+         *  @memberof Constants#
+         *  @static
+         */
+        this.ABR_STRATEGY_TAP = 'abrTap';
+
+        /**
          *  @constant {string} ABR_STRATEGY_THROUGHPUT Adaptive bitrate algorithm based on throughput
          *  @memberof Constants#
          *  @static

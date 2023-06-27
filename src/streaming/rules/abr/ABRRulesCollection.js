@@ -39,6 +39,7 @@ import LoLPRule from './lolp/LoLpRule.js';
 import FactoryMaker from '../../../core/FactoryMaker';
 import SwitchRequest from '../SwitchRequest';
 import Constants from '../../constants/Constants';
+import TapRule from './TapRule';
 
 const QUALITY_SWITCH_RULES = 'qualitySwitchRules';
 const ABANDON_FRAGMENT_RULES = 'abandonFragmentRules';
@@ -78,6 +79,15 @@ function ABRRulesCollection(config) {
                 qualitySwitchRules.push(
                     LoLPRule(context).create({
                         dashMetrics: dashMetrics
+                    })
+                );
+            }
+            else if (settings.get().streaming.abr.ABRStrategy === Constants.ABR_STRATEGY_TAP) {
+                qualitySwitchRules.push(
+                    TapRule(context).create({
+                        dashMetrics: dashMetrics,
+                        mediaPlayerModel: mediaPlayerModel,
+                        settings: settings
                     })
                 );
             } else {

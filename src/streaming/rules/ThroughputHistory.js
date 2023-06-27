@@ -31,16 +31,15 @@
 
 import Constants from '../constants/Constants';
 import FactoryMaker from '../../core/FactoryMaker';
-import EventBus from '../../core/EventBus';
-import MediaPlayerEvents from '../MediaPlayerEvents';
 
 // throughput generally stored in kbit/s
 // latency generally stored in ms
 
 function ThroughputHistory(config) {
-    const context = this.context;
+
     config = config || {};
     // sliding window constants
+    const MAX_TRACE_HISTORY = 10;
     const MAX_MEASUREMENTS_TO_KEEP = 20;
     const AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_LIVE = 3;
     const AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_VOD = 4;
@@ -55,13 +54,13 @@ function ThroughputHistory(config) {
     const EWMA_LATENCY_FAST_HALF_LIFE_COUNT = 1;
 
     const settings = config.settings;
-    const eventBus = EventBus(context).getInstance();
 
     let throughputDict,
         latencyDict,
         ewmaThroughputDict,
         ewmaLatencyDict,
-        ewmaHalfLife;
+        ewmaHalfLife,
+        bupt_traceHistory = [];
 
     function setup() {
         ewmaHalfLife = {
@@ -87,32 +86,29 @@ function ThroughputHistory(config) {
         if (!httpRequest.trace || !httpRequest.trace.length) {
             return;
         }
+        
+        console.log("[BUPT-Trace] chunk url:"+httpRequest.url+" start:"+httpRequest.trequest.getTime()+" end:"+httpRequest._tfinish.getTime());
 
         const latencyTimeInMilliseconds = (httpRequest.tresponse.getTime() - httpRequest.trequest.getTime()) || 1;
         const downloadTimeInMilliseconds = (httpRequest._tfinish.getTime() - httpRequest.tresponse.getTime()) || 1; //Make sure never 0 we divide by this value. Avoid infinity!
         const downloadBytes = httpRequest.trace.reduce((a, b) => a + b.b[0], 0);
-        let throughputMeasureTime = 0, throughput = 0;
 
-        if (httpRequest._fileLoaderType && httpRequest._fileLoaderType === Constants.FILE_LOADER_TYPES.FETCH) {
-            throughputMeasureTime = httpRequest.trace.reduce((a, b) => a + b.d, 0);
+        let throughputMeasureTime = 0, throughput = 0;
+        if (settings.get().streaming.lowLatencyEnabled) {
+            const calculationMode = settings.get().streaming.abr.fetchThroughputCalculationMode;
+            if (calculationMode === Constants.ABR_FETCH_THROUGHPUT_CALCULATION_MOOF_PARSING) {
+                const sumOfThroughputValues = httpRequest.trace.reduce((a, b) => a + b.t, 0);
+                throughput = Math.round(sumOfThroughputValues / httpRequest.trace.length);
+            }
+            if (throughput === 0) {
+                throughputMeasureTime = httpRequest.trace.reduce((a, b) => a + b.d, 0);
+            }
         } else {
             throughputMeasureTime = useDeadTimeLatency ? downloadTimeInMilliseconds : latencyTimeInMilliseconds + downloadTimeInMilliseconds;
         }
 
         if (throughputMeasureTime !== 0) {
             throughput = Math.round((8 * downloadBytes) / throughputMeasureTime); // bits/ms = kbits/s
-        }
-
-        // Get estimated throughput (etp, in kbits/s) from CMSD response headers
-        if (httpRequest.cmsd) {
-            const etp = httpRequest.cmsd.dynamic && httpRequest.cmsd.dynamic.etp ? httpRequest.cmsd.dynamic.etp : null;
-            if (etp) {
-                // Apply weight ratio on etp
-                const etpWeightRatio = settings.get().streaming.cmsd.abr.etpWeightRatio;
-                if (etpWeightRatio > 0 && etpWeightRatio <= 1) {
-                    throughput = (throughput * (1 - etpWeightRatio)) + (etp * etpWeightRatio);
-                }
-            }
         }
 
         checkSettingsForMediaType(mediaType);
@@ -132,11 +128,6 @@ function ThroughputHistory(config) {
         }
 
         throughputDict[mediaType].push(throughput);
-        eventBus.trigger(MediaPlayerEvents.THROUGHPUT_MEASUREMENT_STORED, {
-            throughput,
-            mediaType,
-            httpRequest
-        })
         if (throughputDict[mediaType].length > MAX_MEASUREMENTS_TO_KEEP) {
             throughputDict[mediaType].shift();
         }
@@ -146,6 +137,38 @@ function ThroughputHistory(config) {
             latencyDict[mediaType].shift();
         }
 
+        var p = {};
+        for (var i = 0; i < httpRequest.trace.length; ++i) {
+            let k = parseInt(httpRequest.trace[i].s.getTime() / 1000);
+            let b = httpRequest.trace[i].b[0];
+            let d = httpRequest.trace[i].d;
+            if (!p.hasOwnProperty(k)) {
+                p[k] = [b, d];
+            } else {
+                p[k][0] += b;
+                p[k][1] += d;
+            }
+        }
+        for (var k in p) {
+            let found = false, pos = -1;
+            for (var i = 0; i < bupt_traceHistory.length; ++i) {
+                if (bupt_traceHistory[i][0] == k) {
+                    found = true;
+                    pos = i;
+                }
+            }
+            if (found) {
+                bupt_traceHistory[pos][1][0] += p[k][0];
+                bupt_traceHistory[pos][1][1] += p[k][1];
+            } else {
+                bupt_traceHistory.push([k, p[k]]);
+            }
+        }
+
+        while (bupt_traceHistory.length > MAX_TRACE_HISTORY) {
+            bupt_traceHistory.shift();
+        }
+        
         updateEwmaEstimate(ewmaThroughputDict[mediaType], throughput, 0.001 * downloadTimeInMilliseconds, ewmaHalfLife.throughputHalfLife);
         updateEwmaEstimate(ewmaLatencyDict[mediaType], latencyTimeInMilliseconds, 1, ewmaHalfLife.latencyHalfLife);
     }
@@ -247,6 +270,15 @@ function ThroughputHistory(config) {
         return getAverage(false, mediaType);
     }
 
+    function getLastThroughput(mediaType) {
+        var arr = throughputDict[mediaType];
+        return arr[arr.length - 1];
+    }
+
+    function getTraceHistory() {
+        return bupt_traceHistory;
+    }
+
     function checkSettingsForMediaType(mediaType) {
         throughputDict[mediaType] = throughputDict[mediaType] || [];
         latencyDict[mediaType] = latencyDict[mediaType] || [];
@@ -275,6 +307,8 @@ function ThroughputHistory(config) {
 
     const instance = {
         push,
+        getLastThroughput,
+        getTraceHistory,
         getAverageThroughput,
         getSafeAverageThroughput,
         getAverageLatency,

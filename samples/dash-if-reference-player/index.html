@@ -267,7 +267,7 @@
                     <div class="sub-options-item-body">
                         <label data-toggle="tooltip" data-placement="right"
                                title="BUPT Tap algo.">
-                            <input type="radio" id="abrTap" autocomplete="off" name="abrStrategy"
+                            <input type="radio" id="abrTap" autocomplete="off" name="abrStrategy" checked="checked"
                                    ng-click="changeABRStrategy('abrTap')">
                             ABR Strategy: TAP
                         </label>        
@@ -291,7 +291,7 @@
                         </label>
                         <label data-toggle="tooltip" data-placement="right"
                                title="Dynamically switch between BOLA and Throughput strategies.">
-                            <input type="radio" id="abrDynamic" autocomplete="off" name="abrStrategy" checked="checked"
+                            <input type="radio" id="abrDynamic" autocomplete="off" name="abrStrategy"
                                    ng-model="ABRStrategy"
                                    ng-click="changeABRStrategy('abrDynamic')" value="abrDynamic">
                             ABR Strategy: Dynamic
