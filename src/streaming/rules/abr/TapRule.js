@@ -56,6 +56,10 @@ function TapRule(config) {
 
         const mediaInfo = rulesContext.getMediaInfo();
         const mediaType = rulesContext.getMediaType();
+        if (mediaType === "audio"){
+            // only use ABR server for video
+            return switchRequest;
+        }
         const abrController = rulesContext.getAbrController();
         const throughputHistory = abrController.getThroughputHistory();
 

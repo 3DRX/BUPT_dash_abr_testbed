@@ -1,3 +1,3 @@
-const URL_PREFIX = 'http://10.128.246.21'
+const URL_PREFIX = 'http://127.0.0.1'
 
 export default URL_PREFIX;
