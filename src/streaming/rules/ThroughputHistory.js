@@ -136,9 +136,6 @@ function ThroughputHistory(config) {
             latencyDict[mediaType].shift();
         }
 
-        console.log("==========================================");
-        console.log(JSON.stringify(httpRequest.trace));
-        console.log(httpRequest.trace[0].s.getTime());
         const TIME_INTERVAL = 200; // ms
         let buffer = {
             start: null,
@@ -169,11 +166,9 @@ function ThroughputHistory(config) {
                 buffer.size += size_byte;
             }
         });
-        while (bupt_traceHistory.length > MAX_TRACE_HISTORY) {
-            bupt_traceHistory.shift();
+        if (bupt_traceHistory.length > MAX_TRACE_HISTORY) {
+            bupt_traceHistory.splice(0, bupt_traceHistory.length - MAX_TRACE_HISTORY);
         }
-        console.log(JSON.stringify(bupt_traceHistory));
-        console.log("==========================================");
 
         updateEwmaEstimate(ewmaThroughputDict[mediaType], throughput, 0.001 * downloadTimeInMilliseconds, ewmaHalfLife.throughputHalfLife);
         updateEwmaEstimate(ewmaLatencyDict[mediaType], latencyTimeInMilliseconds, 1, ewmaHalfLife.latencyHalfLife);
