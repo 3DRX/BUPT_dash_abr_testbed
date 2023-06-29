@@ -38,7 +38,7 @@ function ThroughputHistory(config) {
 
     config = config || {};
     // sliding window constants
-    const MAX_TRACE_HISTORY = 10;
+    const MAX_TRACE_HISTORY = 50;
     const MAX_MEASUREMENTS_TO_KEEP = 20;
     const AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_LIVE = 3;
     const AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_VOD = 4;
@@ -85,8 +85,6 @@ function ThroughputHistory(config) {
         if (!httpRequest.trace || !httpRequest.trace.length) {
             return;
         }
-
-        console.log("[BUPT-Trace] chunk url:" + httpRequest.url + " start:" + httpRequest.trequest.getTime() + " end:" + httpRequest._tfinish.getTime());
 
         const latencyTimeInMilliseconds = (httpRequest.tresponse.getTime() - httpRequest.trequest.getTime()) || 1;
         const downloadTimeInMilliseconds = (httpRequest._tfinish.getTime() - httpRequest.tresponse.getTime()) || 1; //Make sure never 0 we divide by this value. Avoid infinity!
@@ -142,8 +140,9 @@ function ThroughputHistory(config) {
             size: 0
         };
         let time_buffer = 0;
+        console.log(JSON.stringify(httpRequest.trace));
         httpRequest.trace.forEach((item) => {
-            const time_index = parseInt(item.s.getTime() / TIME_INTERVAL);
+            const time_index = item.s.getTime();
             const size_byte = item.b[0];
             const duration_ms = item.d;
             if (buffer.start === null) {
@@ -157,7 +156,7 @@ function ThroughputHistory(config) {
                 buffer.size += buffered_size;
                 bupt_traceHistory.push(buffer);
                 buffer = {
-                    start: time_index,
+                    start: time_index + buffered_time,
                     size: Math.round((unbuffered_time / duration_ms) * size_byte)
                 }
                 time_buffer = unbuffered_time;
@@ -166,8 +165,8 @@ function ThroughputHistory(config) {
                 buffer.size += size_byte;
             }
         });
-        if (bupt_traceHistory.length > MAX_TRACE_HISTORY) {
-            bupt_traceHistory.splice(0, bupt_traceHistory.length - MAX_TRACE_HISTORY);
+        while (bupt_traceHistory.length > MAX_TRACE_HISTORY) {
+            bupt_traceHistory.shift();
         }
 
         updateEwmaEstimate(ewmaThroughputDict[mediaType], throughput, 0.001 * downloadTimeInMilliseconds, ewmaHalfLife.throughputHalfLife);
