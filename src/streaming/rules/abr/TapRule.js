@@ -26,7 +26,6 @@ function TapRule(config) {
 
     function setup() {
         logger = Debug(context).getInstance().getLogger(instance);
-        console.log("TapRule setup");
         resetInitialSettngs();
         eventBus.on(Events.MEDIA_FRAGMENT_LOADED, onMediaFragmentLoaded, instance);
         eventBus.on(Events.VIDEO_CHUNK_RECEIVED, onVideoChunkReceived, instance);
@@ -64,6 +63,7 @@ function TapRule(config) {
         const throughputHistory = abrController.getThroughputHistory();
 
         const traceHistory = throughputHistory.getTraceHistory();
+        console.log(`traceHistory: ${JSON.stringify(traceHistory)}`)
         const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
         const ladders = abrController.getBitrateList(mediaInfo);
         const lastBitrate = ladders[last_quality].bitrate;

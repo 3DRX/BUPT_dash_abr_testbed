@@ -962,7 +962,7 @@ function Settings() {
             },
             abr: {
                 movingAverageMethod: Constants.MOVING_AVERAGE_SLIDING_WINDOW,
-                ABRStrategy: Constants.ABR_STRATEGY_DYNAMIC,
+                ABRStrategy: Constants.ABR_STRATEGY_TAP,
                 additionalAbrRules: {
                     insufficientBufferRule: true,
                     switchHistoryRule: true,

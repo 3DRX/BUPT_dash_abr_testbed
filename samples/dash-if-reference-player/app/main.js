@@ -311,7 +311,7 @@ app.controller('DashController', ['$scope', '$window', 'sources', 'contributors'
     $scope.videoAutoSwitchSelected = true;
     $scope.forceQualitySwitchSelected = false;
     $scope.videoQualities = [];
-    $scope.ABRStrategy = 'abrDynamic';
+    $scope.ABRStrategy = 'abrTap';
 
     $scope.liveCatchupMode = 'liveCatchupModeDefault';
     $scope.abrThroughputCalculationMode = 'abrFetchThroughputCalculationMoofParsing';
