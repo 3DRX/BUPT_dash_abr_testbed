@@ -22,8 +22,7 @@
  *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  *  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- *  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
@@ -86,8 +85,8 @@ function ThroughputHistory(config) {
         if (!httpRequest.trace || !httpRequest.trace.length) {
             return;
         }
-        
-        console.log("[BUPT-Trace] chunk url:"+httpRequest.url+" start:"+httpRequest.trequest.getTime()+" end:"+httpRequest._tfinish.getTime());
+
+        console.log("[BUPT-Trace] chunk url:" + httpRequest.url + " start:" + httpRequest.trequest.getTime() + " end:" + httpRequest._tfinish.getTime());
 
         const latencyTimeInMilliseconds = (httpRequest.tresponse.getTime() - httpRequest.trequest.getTime()) || 1;
         const downloadTimeInMilliseconds = (httpRequest._tfinish.getTime() - httpRequest.tresponse.getTime()) || 1; //Make sure never 0 we divide by this value. Avoid infinity!
@@ -137,38 +136,45 @@ function ThroughputHistory(config) {
             latencyDict[mediaType].shift();
         }
 
-        var p = {};
-        for (var i = 0; i < httpRequest.trace.length; ++i) {
-            let k = parseInt(httpRequest.trace[i].s.getTime() / 1000);
-            let b = httpRequest.trace[i].b[0];
-            let d = httpRequest.trace[i].d;
-            if (!p.hasOwnProperty(k)) {
-                p[k] = [b, d];
-            } else {
-                p[k][0] += b;
-                p[k][1] += d;
+        console.log("==========================================");
+        console.log(JSON.stringify(httpRequest.trace));
+        console.log(httpRequest.trace[0].s.getTime());
+        const TIME_INTERVAL = 200; // ms
+        let buffer = {
+            start: null,
+            size: 0
+        };
+        let time_buffer = 0;
+        httpRequest.trace.forEach((item) => {
+            const time_index = parseInt(item.s.getTime() / TIME_INTERVAL);
+            const size_byte = item.b[0];
+            const duration_ms = item.d;
+            if (buffer.start === null) {
+                buffer.start = time_index;
             }
-        }
-        for (var k in p) {
-            let found = false, pos = -1;
-            for (var i = 0; i < bupt_traceHistory.length; ++i) {
-                if (bupt_traceHistory[i][0] == k) {
-                    found = true;
-                    pos = i;
+            time_buffer += duration_ms;
+            if (time_buffer >= TIME_INTERVAL) {
+                const buffered_time = TIME_INTERVAL - (time_buffer - duration_ms);
+                const unbuffered_time = duration_ms - buffered_time;
+                const buffered_size = Math.round((buffered_time / duration_ms) * size_byte);
+                buffer.size += buffered_size;
+                bupt_traceHistory.push(buffer);
+                buffer = {
+                    start: time_index,
+                    size: Math.round((unbuffered_time / duration_ms) * size_byte)
                 }
+                time_buffer = unbuffered_time;
             }
-            if (found) {
-                bupt_traceHistory[pos][1][0] += p[k][0];
-                bupt_traceHistory[pos][1][1] += p[k][1];
-            } else {
-                bupt_traceHistory.push([k, p[k]]);
+            else {
+                buffer.size += size_byte;
             }
-        }
-
+        });
         while (bupt_traceHistory.length > MAX_TRACE_HISTORY) {
             bupt_traceHistory.shift();
         }
-        
+        console.log(JSON.stringify(bupt_traceHistory));
+        console.log("==========================================");
+
         updateEwmaEstimate(ewmaThroughputDict[mediaType], throughput, 0.001 * downloadTimeInMilliseconds, ewmaHalfLife.throughputHalfLife);
         updateEwmaEstimate(ewmaLatencyDict[mediaType], latencyTimeInMilliseconds, 1, ewmaHalfLife.latencyHalfLife);
     }
