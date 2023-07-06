@@ -188,3 +188,6 @@ build/typings/
 
 # Vim
 .vimrc
+
+# Python
+venv
