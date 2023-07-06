@@ -7,3 +7,4 @@
 - dash-if-player frontend (tiny)
 - `push` in ThroughputHistory.js, also add a method
 - add custom ABR interface (sending context in request to external ABR server)
+- external data collection in `ThroughputHistory.push()` and `./data_collect/`
