@@ -20,21 +20,10 @@ function TapRule(config) {
         last_quality,
         last_duration;
 
-    // 2023-6-25
-    // add index in POST request
-    let last_index = 0;
-
     function setup() {
         logger = Debug(context).getInstance().getLogger(instance);
         resetInitialSettngs();
         eventBus.on(Events.MEDIA_FRAGMENT_LOADED, onMediaFragmentLoaded, instance);
-        eventBus.on(Events.VIDEO_CHUNK_RECEIVED, onVideoChunkReceived, instance);
-    }
-
-    function onVideoChunkReceived(e) {
-        if (e.chunk.index) {
-            last_index = e.chunk.index;
-        }
     }
 
     function onMediaFragmentLoaded(e) {
@@ -63,7 +52,8 @@ function TapRule(config) {
         const throughputHistory = abrController.getThroughputHistory();
 
         const traceHistory = throughputHistory.getTraceHistory();
-        console.log(`traceHistory: ${JSON.stringify(traceHistory)}`)
+        const last_chunk_index = throughputHistory.getCurrentChunkIndex();
+        console.log(`chunk_index: ${last_chunk_index}`)
         const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
         const ladders = abrController.getBitrateList(mediaInfo);
         const lastBitrate = ladders[last_quality].bitrate;
@@ -76,7 +66,7 @@ function TapRule(config) {
             duration: duration,
             last_bitrate: lastBitrate,
             buffer_level: bufferLevel,
-            last_index: last_index
+            last_index: last_chunk_index
         };
         $.ajax({
             async: false,
@@ -100,13 +90,11 @@ function TapRule(config) {
     function resetInitialSettngs() {
         last_quality = -1;
         last_duration = -1;
-        last_index = 0;
     }
 
     function reset() {
         resetInitialSettngs();
         eventBus.off(MediaPlayerEvents.MEDIA_FRAGMENT_LOADED, onMediaFragmentLoaded, instance);
-        eventBus.off(Events.VIDEO_CHUNK_RECEIVED, onVideoChunkReceived, instance);
     }
 
     instance = {

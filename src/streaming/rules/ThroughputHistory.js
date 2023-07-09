@@ -63,6 +63,8 @@ function ThroughputHistory(config) {
         ewmaHalfLife,
         bupt_traceHistory = [];
 
+    let current_chunk_index = -1;
+
     function setup() {
         ewmaHalfLife = {
             throughputHalfLife: {
@@ -73,6 +75,10 @@ function ThroughputHistory(config) {
         };
 
         reset();
+    }
+
+    function getCurrentChunkIndex() {
+        return current_chunk_index;
     }
 
     function isCachedResponse(mediaType, latencyMs, downloadTimeMs) {
@@ -137,6 +143,12 @@ function ThroughputHistory(config) {
         }
 
         if (mediaType === Constants.VIDEO) {
+            const url = httpRequest.url;
+            // url looks like:
+            // https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps_3840x2160_12000k/bbb_30fps_3840x2160_12000k_6.m4v
+            const chunk_index = parseInt(url.charAt(url.length - 5));
+            console.log(chunk_index);
+            current_chunk_index = chunk_index;
             let buffer = {
                 start: null,
                 size: 0
@@ -157,16 +169,16 @@ function ThroughputHistory(config) {
                     const buffered_size = Math.round((buffered_time / duration_ms) * size_byte);
                     buffer.size += buffered_size;
                     bupt_traceHistory.push(buffer);
-                    axios.post('http://localhost:8080/trace', buffer)
-                        .then((r) => {
-                            console.log(r);
-                        })
-                        .finally(() => {
-                            console.log('post');
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
+                    // axios.post('http://localhost:8080/trace', buffer)
+                    //     .then((r) => {
+                    //         console.log(r);
+                    //     })
+                    //     .finally(() => {
+                    //         console.log('post');
+                    //     })
+                    //     .catch((e) => {
+                    //         console.log(e);
+                    //     });
                     buffer = {
                         start: time_index + buffered_time,
                         size: Math.round((unbuffered_time / duration_ms) * size_byte)
@@ -322,6 +334,7 @@ function ThroughputHistory(config) {
         push,
         getLastThroughput,
         getTraceHistory,
+        getCurrentChunkIndex,
         getAverageThroughput,
         getSafeAverageThroughput,
         getAverageLatency,
