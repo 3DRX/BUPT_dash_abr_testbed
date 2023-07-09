@@ -40,6 +40,9 @@ import FactoryMaker from '../../../core/FactoryMaker';
 import SwitchRequest from '../SwitchRequest';
 import Constants from '../../constants/Constants';
 import TapRule from './TapRule';
+import MpcRule from './MpcRule';
+import BbaRule from './BbaRule';
+import RobustMpcRule from './RobustMpcRule';
 
 const QUALITY_SWITCH_RULES = 'qualitySwitchRules';
 const ABANDON_FRAGMENT_RULES = 'abandonFragmentRules';
@@ -90,7 +93,36 @@ function ABRRulesCollection(config) {
                         settings: settings
                     })
                 );
-            } else {
+            }
+            else if (settings.get().streaming.abr.ABRStrategy === Constants.ABR_STRATEGY_BBA) {
+                qualitySwitchRules.push(
+                    BbaRule(context).create({
+                        dashMetrics: dashMetrics,
+                        mediaPlayerModel: mediaPlayerModel,
+                        settings: settings
+                    })
+                );
+            }
+            else if (settings.get().streaming.abr.ABRStrategy === Constants.ABR_STRATEGY_MPC) {
+                qualitySwitchRules.push(
+                    MpcRule(context).create({
+                        dashMetrics: dashMetrics,
+                        mediaPlayerModel: mediaPlayerModel,
+                        settings: settings
+                    })
+                );
+            }
+            // If RobustMPC is used we only need this one rule
+            else if (settings.get().streaming.abr.ABRStrategy === Constants.ABR_STRATEGY_RobustMPC) {
+                qualitySwitchRules.push(
+                    RobustMpcRule(context).create({
+                        dashMetrics: dashMetrics,
+                        mediaPlayerModel: mediaPlayerModel,
+                        settings: settings
+                    })
+                );
+            }
+            else {
                 // Only one of BolaRule and ThroughputRule will give a switchRequest.quality !== SwitchRequest.NO_CHANGE.
                 // This is controlled by useBufferOccupancyABR mechanism in AbrController.
                 qualitySwitchRules.push(
@@ -142,7 +174,7 @@ function ABRRulesCollection(config) {
 
         // add custom ABR rules if any
         const customRules = customParametersModel.getAbrCustomRules();
-        customRules.forEach(function (rule) {
+        customRules.forEach(function(rule) {
             if (rule.type === QUALITY_SWITCH_RULES) {
                 qualitySwitchRules.push(rule.rule(context).create());
             }

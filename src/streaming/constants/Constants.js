@@ -149,6 +149,9 @@ class Constants {
          *  @static
          */
         this.ABR_STRATEGY_TAP = 'abrTap';
+        this.ABR_STRATEGY_RobustMPC = 'abrRobustMpc';
+        this.ABR_STRATEGY_MPC = 'abrMpc';
+        this.ABR_STRATEGY_BBA = "abrBba";
 
         /**
          *  @constant {string} ABR_STRATEGY_THROUGHPUT Adaptive bitrate algorithm based on throughput
