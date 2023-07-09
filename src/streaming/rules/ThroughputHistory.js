@@ -146,7 +146,7 @@ function ThroughputHistory(config) {
             const url = httpRequest.url;
             // url looks like:
             // https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps_3840x2160_12000k/bbb_30fps_3840x2160_12000k_6.m4v
-            const chunk_index = parseInt(url.charAt(url.length - 5));
+            const chunk_index = parseInt(url.split(".").at(-2).split("_").at(-1));
             console.log(chunk_index);
             current_chunk_index = chunk_index;
             let buffer = {
