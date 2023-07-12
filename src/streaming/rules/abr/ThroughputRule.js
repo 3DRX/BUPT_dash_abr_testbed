@@ -72,6 +72,8 @@ function ThroughputRule(config) {
         const throughput = throughputHistory.getSafeAverageThroughput(mediaType, isDynamic);
         const latency = throughputHistory.getAverageLatency(mediaType);
         const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
+        const traceHistory = throughputHistory.getTraceHistory();
+        console.log(traceHistory);
 
         if (isNaN(throughput) || !currentBufferState || useBufferOccupancyABR) {
             return switchRequest;

@@ -170,16 +170,16 @@ function ThroughputHistory(config) {
                     buffer.size += buffered_size;
                     bupt_traceHistory.push(buffer);
                     if (getCurrentChunkIndex() >= 5) {
-                        axios.post('http://localhost:8080/trace', buffer)
-                            .then((r) => {
-                                console.log(r);
-                            })
-                            .finally(() => {
-                                console.log('post');
-                            })
-                            .catch((e) => {
-                                console.log(e);
-                            });
+                        // axios.post('http://localhost:8080/trace', buffer)
+                        //     .then((r) => {
+                        //         console.log(r);
+                        //     })
+                        //     .finally(() => {
+                        //         console.log('post');
+                        //     })
+                        //     .catch((e) => {
+                        //         console.log(e);
+                        //     });
                     }
                     buffer = {
                         start: time_index + buffered_time,
