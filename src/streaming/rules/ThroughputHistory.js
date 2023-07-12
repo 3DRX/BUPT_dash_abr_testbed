@@ -64,8 +64,15 @@ function ThroughputHistory(config) {
         bupt_traceHistory = [];
 
     let current_chunk_index = -1;
+    let time_buffer;
+    let buffer;
 
     function setup() {
+        time_buffer = 0;
+        buffer = {
+            start: null,
+            size: 0
+        };
         ewmaHalfLife = {
             throughputHalfLife: {
                 fast: EWMA_THROUGHPUT_FAST_HALF_LIFE_SECONDS,
@@ -148,11 +155,7 @@ function ThroughputHistory(config) {
             const chunk_index = parseInt(url.split(".").at(-2).split("-").at(-1));
             console.log(chunk_index);
             current_chunk_index = chunk_index;
-            let buffer = {
-                start: null,
-                size: 0
-            };
-            let time_buffer = 0;
+            console.log(httpRequest.trace);
             for (let i = 0; i < httpRequest.trace.length; i++) {
                 const item = httpRequest.trace[i];
                 const time_index = item.s.getTime();
@@ -329,6 +332,12 @@ function ThroughputHistory(config) {
         latencyDict = {};
         ewmaThroughputDict = {};
         ewmaLatencyDict = {};
+        bupt_traceHistory = [];
+        time_buffer = 0;
+        buffer = {
+            start: null,
+            size: 0,
+        };
     }
 
     const instance = {
