@@ -44,7 +44,7 @@ function TapRule(config) {
 
         const mediaInfo = rulesContext.getMediaInfo();
         const mediaType = rulesContext.getMediaType();
-        if (mediaType === "audio"){
+        if (mediaType === "audio") {
             // only use ABR server for video
             return switchRequest;
         }
@@ -72,6 +72,24 @@ function TapRule(config) {
             last_index: last_chunk_index,
             rebuffer_time: rebufferTime
         };
+        const qoe = {
+            rebuffer_time: rebufferTime,
+            bitrate: lastBitrate,
+            buffer_level: bufferLevel,
+        }
+        $.ajax({
+            async: true,
+            type: 'POST',
+            contentType: 'application/json',
+            dataType: 'json',
+            url: `${URL_PREFIX}:8081/update_qoe`,
+            data: JSON.stringify(qoe),
+            success: function(_) {
+            },
+            error: function(e) {
+                console.log(e);
+            }
+        });
         $.ajax({
             async: false,
             type: 'POST',
