@@ -11,6 +11,8 @@ if __name__ == "__main__":
             pass
         pass
     data.sort(key=lambda x: x['start'])
+    # delete trace with negative size
+    data = [x for x in data if x['size'] > 0]
     # save sorted to file
     with open('dash_trace_sorted.csv', 'w') as f:
         for x in data:

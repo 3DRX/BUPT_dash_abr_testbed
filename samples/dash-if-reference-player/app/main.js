@@ -35,7 +35,7 @@ angular.module('DashIFTestVectorsService', ['ngResource']).factory('dashifTestVe
 
 app.controller('DashController', ['$scope', '$window', 'sources', 'contributors', 'dashifTestVectors', function ($scope, $window, sources, contributors, dashifTestVectors) {
     $scope.selectedItem = {
-        url: 'http://10.128.246.21:8000/stream.mpd'
+        url: 'http://10.128.246.21:8000/bbb_30fps.mpd'
     };
 
     sources.query(function (data) {
