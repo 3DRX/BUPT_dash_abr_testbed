@@ -151,11 +151,9 @@ function ThroughputHistory(config) {
 
         if (mediaType === Constants.VIDEO) {
             const url = httpRequest.url;
-            // url looks like:
-            const chunk_index = parseInt(url.split(".").at(-2).split("-").at(-1));
+            const chunk_index = parseInt(url.split(".").at(-2).split("_").at(-1));
             console.log(chunk_index);
             current_chunk_index = chunk_index;
-            console.log(httpRequest.trace);
             for (let i = 0; i < httpRequest.trace.length; i++) {
                 const item = httpRequest.trace[i];
                 const time_index = item.s.getTime();
