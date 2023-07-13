@@ -4,6 +4,7 @@ import EventBus from '../../../core/EventBus';
 import Events from '../../../core/events/Events';
 import Debug from '../../../core/Debug';
 import MediaPlayerEvents from '../../MediaPlayerEvents';
+import Constants from '../../constants/Constants';
 import URL_PREFIX from '../../constants/ExternalAbrServerConfig.js'
 import $ from 'jquery';
 
@@ -44,7 +45,7 @@ function TapRule(config) {
 
         const mediaInfo = rulesContext.getMediaInfo();
         const mediaType = rulesContext.getMediaType();
-        if (mediaType === "audio") {
+        if (mediaType === Constants.AUDIO) {
             // only use ABR server for video
             return switchRequest;
         }

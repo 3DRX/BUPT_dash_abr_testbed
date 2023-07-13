@@ -34,12 +34,14 @@
 import MetricsConstants from '../../constants/MetricsConstants';
 import SwitchRequest from '../SwitchRequest';
 import FactoryMaker from '../../../core/FactoryMaker';
-import {HTTPRequest} from '../../vo/metrics/HTTPRequest';
+import { HTTPRequest } from '../../vo/metrics/HTTPRequest';
 import EventBus from '../../../core/EventBus';
 import Events from '../../../core/events/Events';
 import Debug from '../../../core/Debug';
 import MediaPlayerEvents from '../../MediaPlayerEvents';
 import Constants from '../../constants/Constants';
+import URL_PREFIX from '../../constants/ExternalAbrServerConfig.js'
+import $ from 'jquery';
 
 // BOLA_STATE_ONE_BITRATE   : If there is only one bitrate (or initialization failed), always return NO_CHANGE.
 // BOLA_STATE_STARTUP       : Set placeholder buffer such that we download fragments at most recently measured throughput.
@@ -68,6 +70,8 @@ function BolaRule(config) {
     let instance,
         logger,
         bolaStateDict;
+
+    let last_quality;
 
     function setup() {
         logger = Debug(context).getInstance().getLogger(instance);
@@ -287,6 +291,7 @@ function BolaRule(config) {
 
     function onMediaFragmentLoaded(e) {
         if (e && e.chunk && e.chunk.mediaInfo) {
+            last_quality = e.chunk.quality;
             const bolaState = bolaStateDict[e.chunk.mediaInfo.type];
             if (bolaState && bolaState.state !== BOLA_STATE_ONE_BITRATE) {
                 const start = e.chunk.start;
@@ -421,6 +426,32 @@ function BolaRule(config) {
         const latency = throughputHistory.getAverageLatency(mediaType);
         let quality;
 
+        const playbackController = scheduleController.getPlaybackController();
+        const rebufferTime = playbackController.getTotalRebuffer();
+        const ladders = abrController.getBitrateList(mediaInfo);
+        const lastBitrate = ladders[last_quality].bitrate;
+
+        if (mediaType === Constants.VIDEO) {
+            const qoe = {
+                rebuffer_time: rebufferTime,
+                bitrate: lastBitrate,
+                buffer_level: bufferLevel,
+            }
+            $.ajax({
+                async: true,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                url: `${URL_PREFIX}:8081/update_qoe`,
+                data: JSON.stringify(qoe),
+                success: function(_) {
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+            });
+        }
+
         switchRequest.reason.state = bolaState.state;
         switchRequest.reason.throughput = throughput;
         switchRequest.reason.latency = latency;
@@ -515,6 +546,7 @@ function BolaRule(config) {
 
     function resetInitialSettings() {
         bolaStateDict = {};
+        last_quality = -1;
     }
 
     function reset() {
