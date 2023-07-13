@@ -73,24 +73,6 @@
 <div class="container">
     <div class="row title-header">
 
-        <div class="branding">
-            <a href="http://dashif.org/" target="_blank"><img class="image" src="app/img/if.png"/></a>
-            <span id="big-title">Reference Client</span>
-            <span ng-bind="version"></span>
-            <span id="commit-info"><!-- commit-info --></span>
-        </div>
-
-        <!-- Using iframe to solve pre-flight request issue from GIT-->
-        <div class="top-buttons">
-            <iframe id="star-button"
-                    src="//ghbtns.com/github-btn.html?user=Dash-Industry-Forum&repo=dash.js&type=watch&count=true&size=large"
-                    height="30" width="150">
-            </iframe>
-            <iframe id="fork-button"
-                    src="//ghbtns.com/github-btn.html?user=Dash-Industry-Forum&repo=dash.js&type=fork&count=true&size=large"
-                    height="30" width="150">
-            </iframe>
-        </div>
     </div>
     <div class="row">
         <div class="input-group">
@@ -954,17 +936,6 @@
             <div class="bs-callout bs-callout-danger" id="http-warning-container" style="display: none;">
                 <span id="http-warning-text"></span>
             </div>
-            <div class="bs-callout bs-callout-warning">
-                <h5><span class="label label-warning" style="margin-right:3px">Updated</span>Export settings</h5>
-                Our export settings feature creates shorter URLs now.
-                Click on "Copy Settings URL" on the top right and paste the URL in the address bar of your browser. The
-                current settings are compared to the default settings and the difference is stored using query parameters.
-            </div>
-            <div class="bs-callout bs-callout-information">
-                <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-                Additional samples can be found in the <a
-                href="../index.html" target="_blank">Sample Section</a>.
-            </div>
             <div>
                 <ul class="nav nav-tabs" role="tablist">
                     <li class="active">
@@ -1235,36 +1206,7 @@
         </div>
     </div>
 
-    <!-- Conformance violations -->
-    <div class="row">
-        <div class="col-md-12 conformance-violations-panel">
-            <div id="conformance-violations">
-                <h4>Conformance Violations </h4>
-                <ul class="list-unstyled" ng-repeat="conformanceViolation in conformanceViolations">
-                    <li><span class="label label-{{conformanceViolation.level}}">{{conformanceViolation.level}}</span> :
-                        {{conformanceViolation.event.message}}
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-
 </div>
 
-<!-- FOOTER -->
-<div class="footer-area" ng-cloak>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h3 class="footer-text">Contributors:</h3>
-                <a ng-repeat="item in contributors" class="footer-text" href="{{item.link}}" target="_blank">
-                    <img ng-show="hasLogo(item)" ng-src="{{item.logo}}" alt="{{item.link}}"/>
-                    <span class="contributor" ng-show="!hasLogo(item)">{{item.name}}</span>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
 </body>
 </html>
