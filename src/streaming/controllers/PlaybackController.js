@@ -68,6 +68,9 @@ function PlaybackController() {
         initialCatchupModeActivated,
         settings;
 
+    let last_rebuffer_start;
+    let total_rebuffer_time;
+
     function setup() {
         logger = Debug(context).getInstance().getLogger(instance);
 
@@ -88,6 +91,8 @@ function PlaybackController() {
         lowLatencyModeEnabled = false;
         initialCatchupModeActivated = false;
         seekTarget = NaN;
+        last_rebuffer_start = -1;
+        total_rebuffer_time = 0;
 
         if (videoModel) {
             eventBus.off(Events.DATA_UPDATE_COMPLETED, _onDataUpdateCompleted, instance);
@@ -609,12 +614,17 @@ function PlaybackController() {
 
     function _onPlaybackWaiting() {
         logger.info('Native video element event: waiting');
+        last_rebuffer_start = new Date().getTime();
         eventBus.trigger(Events.PLAYBACK_WAITING, { playingTime: getTime() });
     }
 
     function _onPlaybackPlaying() {
         logger.info('Native video element event: playing');
         internalSeek = false;
+        if (last_rebuffer_start > 0) {
+            total_rebuffer_time += new Date().getTime() - last_rebuffer_start;
+            last_rebuffer_start = -1;
+        }
         eventBus.trigger(Events.PLAYBACK_PLAYING, { playingTime: getTime() });
     }
 
@@ -758,6 +768,10 @@ function PlaybackController() {
         });
 
         return bufferLevel;
+    }
+
+    function getTotalRebuffer() {
+        return total_rebuffer_time;
     }
 
     /**
@@ -907,7 +921,8 @@ function PlaybackController() {
         seekToCurrentLive,
         reset,
         updateCurrentTime,
-        getAvailabilityStartTime
+        getAvailabilityStartTime,
+        getTotalRebuffer,
     };
 
     setup();

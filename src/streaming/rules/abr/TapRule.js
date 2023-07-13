@@ -49,8 +49,11 @@ function TapRule(config) {
             return switchRequest;
         }
         const abrController = rulesContext.getAbrController();
+        const scheduleController = rulesContext.getScheduleController();
+        const playbackController = scheduleController.getPlaybackController();
         const throughputHistory = abrController.getThroughputHistory();
 
+        const rebufferTime = playbackController.getTotalRebuffer();
         const traceHistory = throughputHistory.getTraceHistory();
         const last_chunk_index = throughputHistory.getCurrentChunkIndex();
         console.log(`chunk_index: ${last_chunk_index}`)
@@ -66,7 +69,8 @@ function TapRule(config) {
             duration: duration,
             last_bitrate: lastBitrate,
             buffer_level: bufferLevel,
-            last_index: last_chunk_index
+            last_index: last_chunk_index,
+            rebuffer_time: rebufferTime
         };
         $.ajax({
             async: false,
