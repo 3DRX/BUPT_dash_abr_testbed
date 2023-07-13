@@ -75,6 +75,7 @@ function MpcRule(config) {
         const ladders = abrController.getBitrateList(mediaInfo);
         const lastBitrate = ladders[last_quality].bitrate;
         const duration = last_duration; // dashHandler.getNextSegmentByIndexForBupt(); // TODO: need impl.
+        const rebufferTime = playbackController.getTotalRebuffer();
 
         let choose_quality = -1;
         var data = {
@@ -87,6 +88,26 @@ function MpcRule(config) {
             "lastRequest": last_index,
             "duration": duration
         };
+        if (mediaType === Constants.VIDEO) {
+            const qoe = {
+                rebuffer_time: rebufferTime,
+                bitrate: lastBitrate,
+                buffer_level: bufferLevel,
+            }
+            $.ajax({
+                async: true,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                url: `${URL_PREFIX}:8081/update_qoe`,
+                data: JSON.stringify(qoe),
+                success: function(_) {
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+            });
+        }
         stop = false;
         $.ajax ({
             async: false,
