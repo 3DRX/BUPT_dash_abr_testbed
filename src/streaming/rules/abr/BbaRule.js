@@ -53,8 +53,8 @@ function BbaRule(config) {
         const throughputHistory = abrController.getThroughputHistory();
 
         const scheduleController = rulesContext.getScheduleController();
-        const rebufferTime = playbackController.getTotalRebuffer();
         const playbackController = scheduleController.getPlaybackController();
+        const rebufferTime = playbackController.getTotalRebuffer();
         const traceHistory = throughputHistory.getTraceHistory();
         const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
         const ladders = abrController.getBitrateList(mediaInfo);
@@ -65,7 +65,6 @@ function BbaRule(config) {
         var data = {
             "buffer_level": bufferLevel
         };
-        stop = false;
         if (mediaType === Constants.VIDEO) {
             const qoe = {
                 rebuffer_time: rebufferTime,
@@ -108,20 +107,6 @@ function BbaRule(config) {
                 // return switchRequest;
             }
         });
-
-        function sleep(numberMillis) {
-            var now = new Date();
-            var exitTime = now.getTime() + numberMillis;
-            while (true) {
-                now = new Date();
-                if (now.getTime() > exitTime)
-                    return;
-            }
-        }
-        while (!stop) {
-            sleep(10);
-        }
-
         return switchRequest;
     }
 
