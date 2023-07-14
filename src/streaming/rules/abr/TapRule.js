@@ -18,18 +18,15 @@ function TapRule(config) {
 
     let instance,
         logger,
-        last_quality,
         last_duration;
 
     function setup() {
         logger = Debug(context).getInstance().getLogger(instance);
-        resetInitialSettngs();
         eventBus.on(Events.MEDIA_FRAGMENT_LOADED, onMediaFragmentLoaded, instance);
     }
 
     function onMediaFragmentLoaded(e) {
         if (e && e.chunk && e.chunk.mediaInfo) {
-            last_quality = e.chunk.quality;
             last_duration = e.chunk.duration;
         }
     }
@@ -57,10 +54,11 @@ function TapRule(config) {
         const rebufferTime = playbackController.getTotalRebuffer();
         const traceHistory = throughputHistory.getTraceHistory();
         const last_chunk_index = throughputHistory.getCurrentChunkIndex();
+        const last_quality_index = throughputHistory.getQualityIndex();
         console.log(`chunk_index: ${last_chunk_index}`)
         const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
         const ladders = abrController.getBitrateList(mediaInfo);
-        const lastBitrate = ladders[last_quality].bitrate;
+        const lastBitrate = ladders[last_quality_index].bitrate;
         const duration = last_duration; // dashHandler.getNextSegmentByIndexForBupt(); // TODO: need impl.
 
         let choose_quality = -1;
@@ -111,7 +109,6 @@ function TapRule(config) {
     }
 
     function resetInitialSettngs() {
-        last_quality = -1;
         last_duration = -1;
     }
 

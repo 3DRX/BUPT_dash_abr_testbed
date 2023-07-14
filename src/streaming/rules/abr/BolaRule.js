@@ -71,8 +71,6 @@ function BolaRule(config) {
         logger,
         bolaStateDict;
 
-    let last_quality;
-
     function setup() {
         logger = Debug(context).getInstance().getLogger(instance);
         resetInitialSettings();
@@ -291,7 +289,6 @@ function BolaRule(config) {
 
     function onMediaFragmentLoaded(e) {
         if (e && e.chunk && e.chunk.mediaInfo) {
-            last_quality = e.chunk.quality;
             const bolaState = bolaStateDict[e.chunk.mediaInfo.type];
             if (bolaState && bolaState.state !== BOLA_STATE_ONE_BITRATE) {
                 const start = e.chunk.start;
@@ -429,9 +426,12 @@ function BolaRule(config) {
         const playbackController = scheduleController.getPlaybackController();
         const rebufferTime = playbackController.getTotalRebuffer();
         const ladders = abrController.getBitrateList(mediaInfo);
-        const lastBitrate = ladders[last_quality].bitrate;
+        const last_quality_index = throughputHistory.getQualityIndex();
+        const lastBitrate = ladders[last_quality_index].bitrate;
 
         if (mediaType === Constants.VIDEO) {
+            console.log(last_quality_index);
+            console.log(JSON.stringify(ladders));
             const qoe = {
                 rebuffer_time: rebufferTime,
                 bitrate: lastBitrate,
@@ -546,7 +546,6 @@ function BolaRule(config) {
 
     function resetInitialSettings() {
         bolaStateDict = {};
-        last_quality = -1;
     }
 
     function reset() {

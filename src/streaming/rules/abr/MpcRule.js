@@ -72,9 +72,10 @@ function MpcRule(config) {
         const scheduleController = rulesContext.getScheduleController();
         const playbackController = scheduleController.getPlaybackController();
         const traceHistory = throughputHistory.getTraceHistory();
+        const last_quality_index = throughputHistory.getQualityIndex();
         const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
         const ladders = abrController.getBitrateList(mediaInfo);
-        const lastBitrate = ladders[last_quality].bitrate;
+        const lastBitrate = ladders[last_quality_index].bitrate;
         const duration = last_duration; // dashHandler.getNextSegmentByIndexForBupt(); // TODO: need impl.
         const rebufferTime = playbackController.getTotalRebuffer();
 

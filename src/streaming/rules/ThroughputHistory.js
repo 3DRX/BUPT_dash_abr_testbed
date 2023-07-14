@@ -63,12 +63,15 @@ function ThroughputHistory(config) {
         ewmaHalfLife,
         bupt_traceHistory = [];
 
-    let current_chunk_index = -1;
+    let current_chunk_index;
     let time_buffer;
     let buffer;
+    let last_quality_index;
 
     function setup() {
+        current_chunk_index = -1;
         time_buffer = 0;
+        last_quality_index = 0;
         buffer = {
             start: null,
             size: 0
@@ -151,8 +154,28 @@ function ThroughputHistory(config) {
 
         if (mediaType === Constants.VIDEO) {
             const url = httpRequest.url;
+            const resolution = url.split(".").at(-2).split("_").at(-3);
             const chunk_index = parseInt(url.split(".").at(-2).split("_").at(-1));
-            console.log(chunk_index);
+            if (resolution === "640x360") {
+                last_quality_index = 0;
+            }
+            else if (resolution === "768x432") {
+                last_quality_index = 1;
+            }
+            else if (resolution === "1024x576") {
+                last_quality_index = 2;
+            }
+            else if (resolution === "1280x720") {
+                last_quality_index = 3;
+            }
+            else if (resolution === "1920x1080") {
+                last_quality_index = 4;
+            }
+            else if (resolution === "3840x2160") {
+                last_quality_index = 5;
+            }
+            console.log(`last_quality_index: ${last_quality_index}`);
+            console.log(`chunk_index: ${chunk_index}`);
             current_chunk_index = chunk_index;
             for (let i = 0; i < httpRequest.trace.length; i++) {
                 const item = httpRequest.trace[i];
@@ -306,6 +329,10 @@ function ThroughputHistory(config) {
         return bupt_traceHistory;
     }
 
+    function getQualityIndex() {
+        return last_quality_index;
+    }
+
     function checkSettingsForMediaType(mediaType) {
         throughputDict[mediaType] = throughputDict[mediaType] || [];
         latencyDict[mediaType] = latencyDict[mediaType] || [];
@@ -332,6 +359,8 @@ function ThroughputHistory(config) {
         ewmaLatencyDict = {};
         bupt_traceHistory = [];
         time_buffer = 0;
+        last_quality_index = 0;
+        current_chunk_index = -1;
         buffer = {
             start: null,
             size: 0,
@@ -342,6 +371,7 @@ function ThroughputHistory(config) {
         push,
         getLastThroughput,
         getTraceHistory,
+        getQualityIndex,
         getCurrentChunkIndex,
         getAverageThroughput,
         getSafeAverageThroughput,
