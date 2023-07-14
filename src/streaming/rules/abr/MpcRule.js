@@ -109,26 +109,26 @@ function MpcRule(config) {
                     console.log(e);
                 }
             });
+            $.ajax({
+                async: false,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                url: `${URL_PREFIX}:8081/get_abr_result/`,
+                data: JSON.stringify(data),
+                success: function(data) {
+                    choose_quality = data.quality;
+                    switchRequest.quality = choose_quality;
+                    switchRequest.reason = {};
+                    switchRequest.reason.throughput = data.estimate_throughput;
+                    stop = true;
+                    console.log(data["estimate_throughput"]);
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+            });
         }
-        $.ajax({
-            async: false,
-            type: 'POST',
-            contentType: 'application/json',
-            dataType: 'json',
-            url: `${URL_PREFIX}:8081/get_abr_result/`,
-            data: JSON.stringify(data),
-            success: function(data) {
-                choose_quality = data.quality;
-                switchRequest.quality = choose_quality;
-                switchRequest.reason = {};
-                switchRequest.reason.throughput = data.estimate_throughput;
-                stop = true;
-                console.log(data["estimate_throughput"]);
-            },
-            error: function(e) {
-                console.log(e);
-            }
-        });
         return switchRequest;
     }
 

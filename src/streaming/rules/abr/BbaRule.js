@@ -67,28 +67,28 @@ function BbaRule(config) {
                     console.log(e);
                 }
             });
+            $.ajax({
+                async: false,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                url: `${URL_PREFIX}:8083/get_abr_result/`,
+                data: JSON.stringify(data),
+                success: function(data) {
+                    choose_quality = data.quality;
+                    switchRequest.quality = choose_quality;
+                    switchRequest.reason = {};
+                    switchRequest.reason.throughput = data.estimate_throughput;
+                    stop = true;
+                    // return switchRequest;
+                },
+                error: function(e) {
+                    console.log('[' + new Date().getTime() + '][BUPT-AJAX] ABR ERROR');
+                    stop = true;
+                    // return switchRequest;
+                }
+            });
         }
-        $.ajax({
-            async: false,
-            type: 'POST',
-            contentType: 'application/json',
-            dataType: 'json',
-            url: `${URL_PREFIX}:8083/get_abr_result/`,
-            data: JSON.stringify(data),
-            success: function(data) {
-                choose_quality = data.quality;
-                switchRequest.quality = choose_quality;
-                switchRequest.reason = {};
-                switchRequest.reason.throughput = data.estimate_throughput;
-                stop = true;
-                // return switchRequest;
-            },
-            error: function(e) {
-                console.log('[' + new Date().getTime() + '][BUPT-AJAX] ABR ERROR');
-                stop = true;
-                // return switchRequest;
-            }
-        });
         return switchRequest;
     }
 

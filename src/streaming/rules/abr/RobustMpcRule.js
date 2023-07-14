@@ -110,43 +110,29 @@ function RobustMpcRule(config) {
                     console.log(e);
                 }
             });
+            $.ajax ({
+                async: false,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                url: `${URL_PREFIX}:8082/get_abr_result/`,
+                data: JSON.stringify(data),
+                success: function (data) {
+                    choose_quality = data.quality;
+                    switchRequest.quality = choose_quality;
+                    switchRequest.reason = {};
+                    switchRequest.reason.throughput = data.estimate_throughput;
+                    stop = true;
+                    console.log(data["estimate_throughput"]);
+                    // return switchRequest;
+                },
+                error: function (e) {
+                    console.log('[' + new Date().getTime() + '][BUPT-AJAX] ABR ERROR');
+                    stop = true;
+                    // return switchRequest;
+                }
+            });
         }
-        $.ajax ({
-            async: false,
-            type: 'POST',
-            contentType: 'application/json',
-            dataType: 'json',
-            url: `${URL_PREFIX}:8082/get_abr_result/`,
-            data: JSON.stringify(data),
-            success: function (data) {
-                choose_quality = data.quality;
-                switchRequest.quality = choose_quality;
-                switchRequest.reason = {};
-                switchRequest.reason.throughput = data.estimate_throughput;
-                stop = true;
-                console.log(data["estimate_throughput"]);
-                // return switchRequest;
-            },
-            error: function (e) {
-                console.log('[' + new Date().getTime() + '][BUPT-AJAX] ABR ERROR');
-                stop = true;
-                // return switchRequest;
-            }
-        });
-
-        function sleep(numberMillis) {
-            var now = new Date();
-            var exitTime = now.getTime() + numberMillis;
-            while (true) {
-                now = new Date();
-                if (now.getTime() > exitTime)
-                    return;
-            }
-        }
-        while (!stop) {
-            sleep(10);
-        }
-
         return switchRequest;
     }
 
