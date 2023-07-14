@@ -6,6 +6,7 @@ import EventBus from '../../../core/EventBus';
 import Events from '../../../core/events/Events';
 import Debug from '../../../core/Debug';
 import MediaPlayerEvents from '../../MediaPlayerEvents';
+import Constants from '../../constants/Constants';
 import $ from 'jquery';
 import URL_PREFIX from '../../constants/ExternalAbrServerConfig';
 
@@ -100,7 +101,7 @@ function RobustMpcRule(config) {
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
-                url: `${URL_PREFIX}:8081/update_qoe`,
+                url: `${URL_PREFIX}:8000/update_qoe`,
                 data: JSON.stringify(qoe),
                 success: function(_) {
                 },

@@ -83,7 +83,7 @@ function TapRule(config) {
             type: 'POST',
             contentType: 'application/json',
             dataType: 'json',
-            url: `${URL_PREFIX}:8081/update_qoe`,
+            url: `${URL_PREFIX}:8000/update_qoe`,
             data: JSON.stringify(qoe),
             success: function(_) {
             },

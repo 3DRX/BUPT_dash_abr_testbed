@@ -6,6 +6,7 @@ import EventBus from '../../../core/EventBus';
 import Events from '../../../core/events/Events';
 import Debug from '../../../core/Debug';
 import MediaPlayerEvents from '../../MediaPlayerEvents';
+import Constants from '../../constants/Constants';
 import $ from 'jquery';
 import URL_PREFIX from '../../constants/ExternalAbrServerConfig';
 
@@ -51,6 +52,9 @@ function BbaRule(config) {
         const abrController = rulesContext.getAbrController();
         const throughputHistory = abrController.getThroughputHistory();
 
+        const scheduleController = rulesContext.getScheduleController();
+        const rebufferTime = playbackController.getTotalRebuffer();
+        const playbackController = scheduleController.getPlaybackController();
         const traceHistory = throughputHistory.getTraceHistory();
         const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
         const ladders = abrController.getBitrateList(mediaInfo);
@@ -62,14 +66,34 @@ function BbaRule(config) {
             "buffer_level": bufferLevel
         };
         stop = false;
-        $.ajax ({
+        if (mediaType === Constants.VIDEO) {
+            const qoe = {
+                rebuffer_time: rebufferTime,
+                bitrate: lastBitrate,
+                buffer_level: bufferLevel,
+            }
+            $.ajax({
+                async: true,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                url: `${URL_PREFIX}:8000/update_qoe`,
+                data: JSON.stringify(qoe),
+                success: function(_) {
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+            });
+        }
+        $.ajax({
             async: false,
             type: 'POST',
             contentType: 'application/json',
             dataType: 'json',
             url: `${URL_PREFIX}:8083/get_abr_result/`,
             data: JSON.stringify(data),
-            success: function (data) {
+            success: function(data) {
                 choose_quality = data.quality;
                 switchRequest.quality = choose_quality;
                 switchRequest.reason = {};
@@ -78,7 +102,7 @@ function BbaRule(config) {
                 console.log(data["estimate_throughput"]);
                 // return switchRequest;
             },
-            error: function (e) {
+            error: function(e) {
                 console.log('[' + new Date().getTime() + '][BUPT-AJAX] ABR ERROR');
                 stop = true;
                 // return switchRequest;

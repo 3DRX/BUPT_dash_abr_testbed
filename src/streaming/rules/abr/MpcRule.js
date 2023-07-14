@@ -6,6 +6,7 @@ import EventBus from '../../../core/EventBus';
 import Events from '../../../core/events/Events';
 import Debug from '../../../core/Debug';
 import MediaPlayerEvents from '../../MediaPlayerEvents';
+import Constants from '../../constants/Constants';
 import $ from 'jquery';
 import URL_PREFIX from '../../constants/ExternalAbrServerConfig';
 
@@ -99,7 +100,7 @@ function MpcRule(config) {
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
-                url: `${URL_PREFIX}:8081/update_qoe`,
+                url: `${URL_PREFIX}:8000/update_qoe`,
                 data: JSON.stringify(qoe),
                 success: function(_) {
                 },
@@ -108,43 +109,25 @@ function MpcRule(config) {
                 }
             });
         }
-        stop = false;
-        $.ajax ({
+        $.ajax({
             async: false,
             type: 'POST',
             contentType: 'application/json',
             dataType: 'json',
             url: `${URL_PREFIX}:8081/get_abr_result/`,
             data: JSON.stringify(data),
-            success: function (data) {
+            success: function(data) {
                 choose_quality = data.quality;
                 switchRequest.quality = choose_quality;
                 switchRequest.reason = {};
                 switchRequest.reason.throughput = data.estimate_throughput;
                 stop = true;
                 console.log(data["estimate_throughput"]);
-                // return switchRequest;
             },
-            error: function (_) {
-                console.log('[' + new Date().getTime() + '][BUPT-AJAX] ABR ERROR');
-                stop = true;
-                // return switchRequest;
+            error: function(e) {
+                console.log(e);
             }
         });
-
-        function sleep(numberMillis) {
-            var now = new Date();
-            var exitTime = now.getTime() + numberMillis;
-            while (true) {
-                now = new Date();
-                if (now.getTime() > exitTime)
-                    return;
-            }
-        }
-        while (!stop) {
-            sleep(10);
-        }
-
         return switchRequest;
     }
 
