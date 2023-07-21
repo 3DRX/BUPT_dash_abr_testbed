@@ -32,6 +32,8 @@ import FactoryMaker from '../../../core/FactoryMaker';
 import SwitchRequest from '../SwitchRequest';
 import Constants from '../../constants/Constants';
 import MetricsConstants from '../../constants/MetricsConstants';
+import URL_PREFIX from '../../constants/ExternalAbrServerConfig.js'
+import $ from 'jquery';
 
 function ThroughputRule(config) {
 
@@ -73,6 +75,12 @@ function ThroughputRule(config) {
         const latency = throughputHistory.getAverageLatency(mediaType);
         const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
         const traceHistory = throughputHistory.getTraceHistory();
+        const last_quality_index = throughputHistory.getQualityIndex();
+        const ladders = abrController.getBitrateList(mediaInfo);
+        const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
+        const lastBitrate = ladders[last_quality_index].bitrate;
+        const playbackController = scheduleController.getPlaybackController();
+        const rebufferTime = playbackController.getTotalRebuffer();
         console.log(traceHistory);
 
         if (isNaN(throughput) || !currentBufferState || useBufferOccupancyABR) {
@@ -83,8 +91,29 @@ function ThroughputRule(config) {
             if (currentBufferState.state === MetricsConstants.BUFFER_LOADED || isDynamic) {
                 switchRequest.quality = abrController.getQualityForBitrate(mediaInfo, throughput, streamId, latency);
                 scheduleController.setTimeToLoadDelay(0);
-                switchRequest.reason = {throughput: throughput, latency: latency};
+                switchRequest.reason = { throughput: throughput, latency: latency };
             }
+        }
+
+        if (mediaType === Constants.VIDEO) {
+            const qoe = {
+                rebuffer_time: rebufferTime,
+                bitrate: lastBitrate,
+                buffer_level: bufferLevel,
+            }
+            $.ajax({
+                async: true,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                url: `${URL_PREFIX}:8000/update_qoe`,
+                data: JSON.stringify(qoe),
+                success: function(_) {
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+            });
         }
 
         return switchRequest;
