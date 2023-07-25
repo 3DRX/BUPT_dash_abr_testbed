@@ -162,7 +162,7 @@ a:hover {
 }
 
 .col-md-9 {
-    width: 65%;
+    width: 50%;
     padding-top: 15px;
 }
 
@@ -272,7 +272,7 @@ input[type=range].volumebar::-webkit-slider-thumb {
 flot{
     display: block;
     width: 100%;
-    height: 200px;
+    height: 160px;
 }
 
 #chart-inventory {
