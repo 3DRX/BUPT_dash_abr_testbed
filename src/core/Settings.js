@@ -332,7 +332,7 @@ import Events from './events/Events';
  * If this flag is set to true then dash.js will use the MSE v.2 API call "changeType()" before switching to a different track.
  * Note that some platforms might not implement the changeType functio. dash.js is checking for the availability before trying to call it.
  * @property {boolean} [mediaSourceDurationInfinity=true]
- * If this flag is set to true then dash.js will allow `Infinity` to be set as the MediaSource duration otherwise the duration will be set to `Math.pow(2,32)` instead of `Infinity` to allow appending segments indefinitely. 
+ * If this flag is set to true then dash.js will allow `Infinity` to be set as the MediaSource duration otherwise the duration will be set to `Math.pow(2,32)` instead of `Infinity` to allow appending segments indefinitely.
  * Some platforms such as WebOS 4.x have issues with seeking when duration is set to `Infinity`, setting this flag to false resolve this.
  * @property {boolean} [resetSourceBuffersForTrackSwitch=false]
  * When switching to a track that is not compatible with the currently active MSE SourceBuffers, MSE will be reset. This happens when we switch codecs on a system
@@ -831,7 +831,7 @@ function Settings() {
      */
     const defaultSettings = {
         debug: {
-            logLevel: Debug.LOG_LEVEL_WARNING,
+            logLevel: Debug.LOG_LEVEL_NONE,
             dispatchEvent: false
         },
         streaming: {
@@ -869,7 +869,7 @@ function Settings() {
             },
             buffer: {
                 enableSeekDecorrelationFix: false,
-                fastSwitchEnabled: true,
+                fastSwitchEnabled: false,
                 flushBufferAtTrackSwitch: false,
                 reuseExistingSourceBuffers: true,
                 bufferPruningInterval: 10,
@@ -980,12 +980,12 @@ function Settings() {
             },
             abr: {
                 movingAverageMethod: Constants.MOVING_AVERAGE_SLIDING_WINDOW,
-                ABRStrategy: Constants.ABR_STRATEGY_TAP,
+                ABRStrategy: Constants.ABR_STRATEGY_BOLA,
                 additionalAbrRules: {
-                    insufficientBufferRule: true,
-                    switchHistoryRule: true,
-                    droppedFramesRule: true,
-                    abandonRequestsRule: true
+                    insufficientBufferRule: false,
+                    switchHistoryRule: false,
+                    droppedFramesRule: false,
+                    abandonRequestsRule: false
                 },
                 bandwidthSafetyFactor: 0.9,
                 useDefaultABRRules: true,
