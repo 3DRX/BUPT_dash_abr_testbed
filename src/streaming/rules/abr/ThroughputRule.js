@@ -81,6 +81,7 @@ function ThroughputRule(config) {
         const lastBitrate = ladders[last_quality_index].bitrate;
         const playbackController = scheduleController.getPlaybackController();
         const rebufferTime = playbackController.getTotalRebuffer();
+        console.log(throughputHistory);
         console.log(traceHistory);
 
         if (isNaN(throughput) || !currentBufferState || useBufferOccupancyABR) {

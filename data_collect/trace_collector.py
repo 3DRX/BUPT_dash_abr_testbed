@@ -33,6 +33,14 @@ def get_trace():
     return jsonify({'response': 'ok'})
 
 
+@app.route('/on-new-video-chunk', methods=['POST'])
+@cross_origin()
+def post_on_new_video_chunk():
+    req: dict = request.json
+    print(req)
+    # fc.append(str(req['start'])+','+str(req['size']))
+    return jsonify({'response': 'ok'})
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=False)
     pass

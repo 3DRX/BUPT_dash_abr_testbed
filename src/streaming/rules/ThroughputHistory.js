@@ -28,15 +28,14 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Constants from '../constants/Constants';
-import FactoryMaker from '../../core/FactoryMaker';
-import axios from 'axios';
+import Constants from "../constants/Constants";
+import FactoryMaker from "../../core/FactoryMaker";
+import axios from "axios";
 
 // throughput generally stored in kbit/s
 // latency generally stored in ms
 
 function ThroughputHistory(config) {
-
     config = config || {};
     // sliding window constants
     const MAX_TRACE_HISTORY = 20;
@@ -74,14 +73,17 @@ function ThroughputHistory(config) {
         last_quality_index = 0;
         buffer = {
             start: null,
-            size: 0
+            size: 0,
         };
         ewmaHalfLife = {
             throughputHalfLife: {
                 fast: EWMA_THROUGHPUT_FAST_HALF_LIFE_SECONDS,
-                slow: EWMA_THROUGHPUT_SLOW_HALF_LIFE_SECONDS
+                slow: EWMA_THROUGHPUT_SLOW_HALF_LIFE_SECONDS,
             },
-            latencyHalfLife: { fast: EWMA_LATENCY_FAST_HALF_LIFE_COUNT, slow: EWMA_LATENCY_SLOW_HALF_LIFE_COUNT }
+            latencyHalfLife: {
+                fast: EWMA_LATENCY_FAST_HALF_LIFE_COUNT,
+                slow: EWMA_LATENCY_SLOW_HALF_LIFE_COUNT,
+            },
         };
 
         reset();
@@ -93,9 +95,15 @@ function ThroughputHistory(config) {
 
     function isCachedResponse(mediaType, latencyMs, downloadTimeMs) {
         if (mediaType === Constants.VIDEO) {
-            return downloadTimeMs < settings.get().streaming.cacheLoadThresholds[Constants.VIDEO];
+            return (
+                downloadTimeMs <
+                settings.get().streaming.cacheLoadThresholds[Constants.VIDEO]
+            );
         } else if (mediaType === Constants.AUDIO) {
-            return downloadTimeMs < settings.get().streaming.cacheLoadThresholds[Constants.AUDIO];
+            return (
+                downloadTimeMs <
+                settings.get().streaming.cacheLoadThresholds[Constants.AUDIO]
+            );
         }
     }
 
@@ -104,40 +112,74 @@ function ThroughputHistory(config) {
             return;
         }
 
-        const latencyTimeInMilliseconds = (httpRequest.tresponse.getTime() - httpRequest.trequest.getTime()) || 1;
-        const downloadTimeInMilliseconds = (httpRequest._tfinish.getTime() - httpRequest.tresponse.getTime()) || 1; //Make sure never 0 we divide by this value. Avoid infinity!
+        const latencyTimeInMilliseconds =
+            httpRequest.tresponse.getTime() - httpRequest.trequest.getTime() ||
+            1;
+        const downloadTimeInMilliseconds =
+            httpRequest._tfinish.getTime() - httpRequest.tresponse.getTime() ||
+            1; //Make sure never 0 we divide by this value. Avoid infinity!
         const downloadBytes = httpRequest.trace.reduce((a, b) => a + b.b[0], 0);
 
-        let throughputMeasureTime = 0, throughput = 0;
+        let throughputMeasureTime = 0,
+            throughput = 0;
         if (settings.get().streaming.lowLatencyEnabled) {
-            const calculationMode = settings.get().streaming.abr.fetchThroughputCalculationMode;
-            if (calculationMode === Constants.ABR_FETCH_THROUGHPUT_CALCULATION_MOOF_PARSING) {
-                const sumOfThroughputValues = httpRequest.trace.reduce((a, b) => a + b.t, 0);
-                throughput = Math.round(sumOfThroughputValues / httpRequest.trace.length);
+            const calculationMode =
+                settings.get().streaming.abr.fetchThroughputCalculationMode;
+            if (
+                calculationMode ===
+                Constants.ABR_FETCH_THROUGHPUT_CALCULATION_MOOF_PARSING
+            ) {
+                const sumOfThroughputValues = httpRequest.trace.reduce(
+                    (a, b) => a + b.t,
+                    0,
+                );
+                throughput = Math.round(
+                    sumOfThroughputValues / httpRequest.trace.length,
+                );
             }
             if (throughput === 0) {
-                throughputMeasureTime = httpRequest.trace.reduce((a, b) => a + b.d, 0);
+                throughputMeasureTime = httpRequest.trace.reduce(
+                    (a, b) => a + b.d,
+                    0,
+                );
             }
         } else {
-            throughputMeasureTime = useDeadTimeLatency ? downloadTimeInMilliseconds : latencyTimeInMilliseconds + downloadTimeInMilliseconds;
+            throughputMeasureTime = useDeadTimeLatency
+                ? downloadTimeInMilliseconds
+                : latencyTimeInMilliseconds + downloadTimeInMilliseconds;
         }
 
         if (throughputMeasureTime !== 0) {
-            throughput = Math.round((8 * downloadBytes) / throughputMeasureTime); // bits/ms = kbits/s
+            throughput = Math.round(
+                (8 * downloadBytes) / throughputMeasureTime,
+            ); // bits/ms = kbits/s
         }
 
         checkSettingsForMediaType(mediaType);
 
-        if (isCachedResponse(mediaType, latencyTimeInMilliseconds, downloadTimeInMilliseconds)) {
-            if (throughputDict[mediaType].length > 0 && !throughputDict[mediaType].hasCachedEntries) {
+        if (
+            isCachedResponse(
+                mediaType,
+                latencyTimeInMilliseconds,
+                downloadTimeInMilliseconds,
+            )
+        ) {
+            if (
+                throughputDict[mediaType].length > 0 &&
+                !throughputDict[mediaType].hasCachedEntries
+            ) {
                 // already have some entries which are not cached entries
                 // prevent cached fragment loads from skewing the average values
                 return;
-            } else { // have no entries || have cached entries
+            } else {
+                // have no entries || have cached entries
                 // no uncached entries yet, rely on cached entries because ABR rules need something to go by
                 throughputDict[mediaType].hasCachedEntries = true;
             }
-        } else if (throughputDict[mediaType] && throughputDict[mediaType].hasCachedEntries) {
+        } else if (
+            throughputDict[mediaType] &&
+            throughputDict[mediaType].hasCachedEntries
+        ) {
             // if we are here then we have some entries already, but they are cached, and now we have a new uncached entry
             clearSettingsForMediaType(mediaType);
         }
@@ -153,25 +195,41 @@ function ThroughputHistory(config) {
         }
 
         if (mediaType === Constants.VIDEO) {
+            const startTime = httpRequest.tresponse.getTime();
+            const finishTime = httpRequest._tfinish.getTime();
             const url = httpRequest.url;
             const resolution = url.split(".").at(-2).split("_").at(-3);
-            const chunk_index = parseInt(url.split(".").at(-2).split("_").at(-1));
+            const chunk_index = parseInt(
+                url.split(".").at(-2).split("_").at(-1),
+            );
+            const chunkData = {
+                downloadBytes,
+                startTime,
+                finishTime,
+                resolution,
+                chunkIndex: chunk_index,
+            };
+            fetch("http://localhost:8080/on-new-video-chunk", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Credentials": "true",
+                },
+                body: JSON.stringify(chunkData),
+            }).then((res) => {
+                console.log(res);
+            });
             if (resolution === "640x360") {
                 last_quality_index = 0;
-            }
-            else if (resolution === "768x432") {
+            } else if (resolution === "768x432") {
                 last_quality_index = 1;
-            }
-            else if (resolution === "1024x576") {
+            } else if (resolution === "1024x576") {
                 last_quality_index = 2;
-            }
-            else if (resolution === "1280x720") {
+            } else if (resolution === "1280x720") {
                 last_quality_index = 3;
-            }
-            else if (resolution === "1920x1080") {
+            } else if (resolution === "1920x1080") {
                 last_quality_index = 4;
-            }
-            else if (resolution === "3840x2160") {
+            } else if (resolution === "3840x2160") {
                 last_quality_index = 5;
             }
             console.log(`last_quality_index: ${last_quality_index}`);
@@ -187,9 +245,12 @@ function ThroughputHistory(config) {
                 }
                 time_buffer += duration_ms;
                 if (time_buffer >= TIME_INTERVAL) {
-                    const buffered_time = TIME_INTERVAL - (time_buffer - duration_ms);
+                    const buffered_time =
+                        TIME_INTERVAL - (time_buffer - duration_ms);
                     const unbuffered_time = duration_ms - buffered_time;
-                    const buffered_size = Math.round((buffered_time / duration_ms) * size_byte);
+                    const buffered_size = Math.round(
+                        (buffered_time / duration_ms) * size_byte,
+                    );
                     buffer.size += buffered_size;
                     bupt_traceHistory.push(buffer);
                     if (getCurrentChunkIndex() >= 5) {
@@ -206,11 +267,12 @@ function ThroughputHistory(config) {
                     }
                     buffer = {
                         start: time_index + buffered_time,
-                        size: Math.round((unbuffered_time / duration_ms) * size_byte)
-                    }
+                        size: Math.round(
+                            (unbuffered_time / duration_ms) * size_byte,
+                        ),
+                    };
                     time_buffer = unbuffered_time;
-                }
-                else {
+                } else {
                     buffer.size += size_byte;
                 }
             }
@@ -219,8 +281,18 @@ function ThroughputHistory(config) {
             }
         }
 
-        updateEwmaEstimate(ewmaThroughputDict[mediaType], throughput, 0.001 * downloadTimeInMilliseconds, ewmaHalfLife.throughputHalfLife);
-        updateEwmaEstimate(ewmaLatencyDict[mediaType], latencyTimeInMilliseconds, 1, ewmaHalfLife.latencyHalfLife);
+        updateEwmaEstimate(
+            ewmaThroughputDict[mediaType],
+            throughput,
+            0.001 * downloadTimeInMilliseconds,
+            ewmaHalfLife.throughputHalfLife,
+        );
+        updateEwmaEstimate(
+            ewmaLatencyDict[mediaType],
+            latencyTimeInMilliseconds,
+            1,
+            ewmaHalfLife.latencyHalfLife,
+        );
     }
 
     function updateEwmaEstimate(ewmaObj, value, weight, halfLife) {
@@ -230,21 +302,24 @@ function ThroughputHistory(config) {
         //     1 - Math.pow(0.5, ewmaObj.totalWeight / halfLife)
 
         const fastAlpha = Math.pow(0.5, weight / halfLife.fast);
-        ewmaObj.fastEstimate = (1 - fastAlpha) * value + fastAlpha * ewmaObj.fastEstimate;
+        ewmaObj.fastEstimate =
+            (1 - fastAlpha) * value + fastAlpha * ewmaObj.fastEstimate;
 
         const slowAlpha = Math.pow(0.5, weight / halfLife.slow);
-        ewmaObj.slowEstimate = (1 - slowAlpha) * value + slowAlpha * ewmaObj.slowEstimate;
+        ewmaObj.slowEstimate =
+            (1 - slowAlpha) * value + slowAlpha * ewmaObj.slowEstimate;
 
         ewmaObj.totalWeight += weight;
     }
 
     function getSampleSize(isThroughput, mediaType, isDynamic) {
-        let arr,
-            sampleSize;
+        let arr, sampleSize;
 
         if (isThroughput) {
             arr = throughputDict[mediaType];
-            sampleSize = isDynamic ? AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_LIVE : AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_VOD;
+            sampleSize = isDynamic
+                ? AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_LIVE
+                : AVERAGE_THROUGHPUT_SAMPLE_AMOUNT_VOD;
         } else {
             arr = latencyDict[mediaType];
             sampleSize = AVERAGE_LATENCY_SAMPLE_AMOUNT;
@@ -258,9 +333,13 @@ function ThroughputHistory(config) {
             // if throughput samples vary a lot, average over a wider sample
             for (let i = 1; i < sampleSize; ++i) {
                 const ratio = arr[arr.length - i] / arr[arr.length - i - 1];
-                if (ratio >= THROUGHPUT_INCREASE_SCALE || ratio <= 1 / THROUGHPUT_DECREASE_SCALE) {
+                if (
+                    ratio >= THROUGHPUT_INCREASE_SCALE ||
+                    ratio <= 1 / THROUGHPUT_DECREASE_SCALE
+                ) {
                     sampleSize += 1;
-                    if (sampleSize === arr.length) { // cannot increase sampleSize beyond arr.length
+                    if (sampleSize === arr.length) {
+                        // cannot increase sampleSize beyond arr.length
                         break;
                     }
                 }
@@ -272,8 +351,10 @@ function ThroughputHistory(config) {
 
     function getAverage(isThroughput, mediaType, isDynamic) {
         // only two moving average methods defined at the moment
-        return settings.get().streaming.abr.movingAverageMethod !== Constants.MOVING_AVERAGE_SLIDING_WINDOW ?
-            getAverageEwma(isThroughput, mediaType) : getAverageSlidingWindow(isThroughput, mediaType, isDynamic);
+        return settings.get().streaming.abr.movingAverageMethod !==
+            Constants.MOVING_AVERAGE_SLIDING_WINDOW
+            ? getAverageEwma(isThroughput, mediaType)
+            : getAverageSlidingWindow(isThroughput, mediaType, isDynamic);
     }
 
     function getAverageSlidingWindow(isThroughput, mediaType, isDynamic) {
@@ -291,17 +372,27 @@ function ThroughputHistory(config) {
     }
 
     function getAverageEwma(isThroughput, mediaType) {
-        const halfLife = isThroughput ? ewmaHalfLife.throughputHalfLife : ewmaHalfLife.latencyHalfLife;
-        const ewmaObj = isThroughput ? ewmaThroughputDict[mediaType] : ewmaLatencyDict[mediaType];
+        const halfLife = isThroughput
+            ? ewmaHalfLife.throughputHalfLife
+            : ewmaHalfLife.latencyHalfLife;
+        const ewmaObj = isThroughput
+            ? ewmaThroughputDict[mediaType]
+            : ewmaLatencyDict[mediaType];
 
         if (!ewmaObj || ewmaObj.totalWeight <= 0) {
             return NaN;
         }
 
         // to correct for startup, divide by zero factor = 1 - Math.pow(0.5, ewmaObj.totalWeight / halfLife)
-        const fastEstimate = ewmaObj.fastEstimate / (1 - Math.pow(0.5, ewmaObj.totalWeight / halfLife.fast));
-        const slowEstimate = ewmaObj.slowEstimate / (1 - Math.pow(0.5, ewmaObj.totalWeight / halfLife.slow));
-        return isThroughput ? Math.min(fastEstimate, slowEstimate) : Math.max(fastEstimate, slowEstimate);
+        const fastEstimate =
+            ewmaObj.fastEstimate /
+            (1 - Math.pow(0.5, ewmaObj.totalWeight / halfLife.fast));
+        const slowEstimate =
+            ewmaObj.slowEstimate /
+            (1 - Math.pow(0.5, ewmaObj.totalWeight / halfLife.slow));
+        return isThroughput
+            ? Math.min(fastEstimate, slowEstimate)
+            : Math.max(fastEstimate, slowEstimate);
     }
 
     function getAverageThroughput(mediaType, isDynamic) {
@@ -339,9 +430,13 @@ function ThroughputHistory(config) {
         ewmaThroughputDict[mediaType] = ewmaThroughputDict[mediaType] || {
             fastEstimate: 0,
             slowEstimate: 0,
-            totalWeight: 0
+            totalWeight: 0,
         };
-        ewmaLatencyDict[mediaType] = ewmaLatencyDict[mediaType] || { fastEstimate: 0, slowEstimate: 0, totalWeight: 0 };
+        ewmaLatencyDict[mediaType] = ewmaLatencyDict[mediaType] || {
+            fastEstimate: 0,
+            slowEstimate: 0,
+            totalWeight: 0,
+        };
     }
 
     function clearSettingsForMediaType(mediaType) {
@@ -376,12 +471,12 @@ function ThroughputHistory(config) {
         getAverageThroughput,
         getSafeAverageThroughput,
         getAverageLatency,
-        reset
+        reset,
     };
 
     setup();
     return instance;
 }
 
-ThroughputHistory.__dashjs_factory_name = 'ThroughputHistory';
+ThroughputHistory.__dashjs_factory_name = "ThroughputHistory";
 export default FactoryMaker.getClassFactory(ThroughputHistory);
